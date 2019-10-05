@@ -3,12 +3,19 @@
 #define PIN_PWM 20
 #define PIN_LED 13
 
-#define PITCH_OFFSET  0
-#define YAW_OFFSET    16
-#define ROLL_OFFSET   16
-#define PITCH_GAIN    10
-#define YAW_GAIN      32
-#define ROLL_GAIN     32
+#define PITCH_OFFSET  (0)   //1024 scale
+#define YAW_OFFSET    (512) //1024 scale
+#define ROLL_OFFSET   (512) //1024 scale
+#define PITCH_GAIN    (10)
+#define YAW_GAIN      (32)
+#define ROLL_GAIN     (32)
+
+#define THROTTLE_LEFT_OFFSET            (0) //1024 scale
+#define THROTTLE_RIGHT_OFFSET           (0) //1024 scale
+#define THROTTLE_LEFT_GAIN_NUMERATOR    (1)
+#define THROTTLE_LEFT_GAIN_DENOMINATOR  (1)
+#define THROTTLE_RIGHT_GAIN_NUMERATOR   (1)
+#define THROTTLE_RIGHT_GAIN_DENOMINATOR (1)
 
 int pwm_count = 0;    // how bright the LED is
 int fadeAmount = 1;    // how many points to fade the LED by
@@ -39,15 +46,10 @@ void setup() {
   Joystick.send_now();
   
 
-  Serial.begin(9600);
-//  Serial.println("OAM A6 simulator");
+  Serial.begin(115200);
+  Serial.println("OAM A3 simulator");
 }
 
-long oldPitchPosition  = -999;
-long oldRollPosition  = -999;
-long oldYawPosition  = -999;
-
-// the loop routine runs over and over again forever:
 void loop() {
 //   // set the brightness of pin 9:
 //   analogWrite(PIN_PWM, pwm_count);
@@ -71,66 +73,76 @@ void loop() {
 // //  analogWrite(PIN_PWM, 10);
 // //  delay(1000);
 
-  long newPitchPosition = pitch.read() + PITCH_OFFSET;
-  if (newPitchPosition != oldPitchPosition) {
-    oldPitchPosition = newPitchPosition;
-    // Serial.println(newPitchPosition);
-  }
+  int32_t newPosition;
 
-  long newRollPosition = roll.read() + ROLL_OFFSET;
-  if (newRollPosition != oldRollPosition) {
-    oldRollPosition = newRollPosition;
-  }
-
-  long newYawPosition = yaw.read() + YAW_OFFSET;
-  if (newYawPosition != oldYawPosition) {
-    oldYawPosition = newYawPosition;
-  }
-
-
-  
-  newPitchPosition *= PITCH_GAIN;
-  if(newPitchPosition <= 0)
+  newPosition = (PITCH_GAIN * (pitch.read())) + PITCH_OFFSET;
+  if(newPosition <= 0)
   {
     Joystick.Y(0);
   }
-  else if(newPitchPosition >= 1023)
+  else if(newPosition >= 1023)
   {
     Joystick.Y(1023);
   }
   else
   {
-    Joystick.Y(newPitchPosition);
+    Joystick.Y(newPosition);
   }
 
-
-  newRollPosition *= ROLL_GAIN;
-  if(newRollPosition <= 0)
+  newPosition = (ROLL_GAIN * (roll.read())) + ROLL_OFFSET;
+  if(newPosition <= 0)
   {
     Joystick.X(0);
   }
-  else if(newRollPosition >= 1023)
+  else if(newPosition >= 1023)
   {
     Joystick.X(1023);
   }
   else
   {
-    Joystick.X(newRollPosition);
+    Joystick.X(newPosition);
   }
 
-
-  newYawPosition *= YAW_GAIN;
-  if(newYawPosition <= 0)
+  newPosition = (YAW_GAIN * (yaw.read())) + YAW_OFFSET;
+  if(newPosition <= 0)
   {
     Joystick.Zrotate(0);
   }
-  else if(newYawPosition >= 1023)
+  else if(newPosition >= 1023)
   {
     Joystick.Zrotate(1023);
   }
   else
   {
-    Joystick.Zrotate(newYawPosition);
+    Joystick.Zrotate(newPosition);
+  }
+
+  newPosition = ((analogRead(0) + THROTTLE_LEFT_OFFSET) * THROTTLE_LEFT_GAIN_NUMERATOR) / THROTTLE_LEFT_GAIN_DENOMINATOR;
+  if(newPosition <= 0)
+  {
+    Joystick.sliderLeft(0);
+  }
+  else if(newPosition >= 1023)
+  {
+    Joystick.sliderLeft(1023);
+  }
+  else
+  {
+    Joystick.sliderLeft(newPosition);
+  }
+
+  newPosition = ((analogRead(1) + THROTTLE_RIGHT_OFFSET) * THROTTLE_RIGHT_GAIN_NUMERATOR) / THROTTLE_RIGHT_GAIN_DENOMINATOR;
+  if(newPosition <= 0)
+  {
+    Joystick.sliderRight(0);
+  }
+  else if(newPosition >= 1023)
+  {
+    Joystick.sliderRight(1023);
+  }
+  else
+  {
+    Joystick.sliderRight(newPosition);
   }
   
 //  Joystick.X(4 * pwm_count);
@@ -141,6 +153,4 @@ void loop() {
 //  Joystick.sliderRight(4 * pwm_count);
 
   Joystick.send_now();
-
-  
 }
