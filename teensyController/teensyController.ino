@@ -6,16 +6,18 @@
 #define PITCH_OFFSET  (0)   //1024 scale
 #define YAW_OFFSET    (512) //1024 scale
 #define ROLL_OFFSET   (512) //1024 scale
-#define PITCH_GAIN    (10)
-#define YAW_GAIN      (32)
-#define ROLL_GAIN     (32)
+#define PITCH_GAIN    (11)
+#define ROLL_GAIN     (-26)
+#define YAW_GAIN      (-20)
 
-#define THROTTLE_LEFT_OFFSET            (0) //1024 scale
-#define THROTTLE_RIGHT_OFFSET           (0) //1024 scale
-#define THROTTLE_LEFT_GAIN_NUMERATOR    (1)
-#define THROTTLE_LEFT_GAIN_DENOMINATOR  (1)
-#define THROTTLE_RIGHT_GAIN_NUMERATOR   (1)
-#define THROTTLE_RIGHT_GAIN_DENOMINATOR (1)
+#define THROTTLE_LEFT_OFFSET            ((int32_t)-800) //1024 scale
+#define THROTTLE_RIGHT_OFFSET           ((int32_t)-800) //1024 scale
+#define THROTTLE_LEFT_GAIN_NUMERATOR    ((int32_t)-13)
+#define THROTTLE_LEFT_GAIN_DENOMINATOR  ((int32_t)10)
+#define THROTTLE_RIGHT_GAIN_NUMERATOR   ((int32_t)-13)
+#define THROTTLE_RIGHT_GAIN_DENOMINATOR ((int32_t)10)
+
+#define DEBUG_PRINT (0)
 
 int pwm_count = 0;    // how bright the LED is
 int fadeAmount = 1;    // how many points to fade the LED by
@@ -47,7 +49,11 @@ void setup() {
   
 
   Serial.begin(115200);
-  Serial.println("OAM A3 simulator");
+
+  #if DEBUG_PRINT == 1
+    Serial.println("OAM A3 simulator\n");
+    Serial.println("");
+  #endif
 }
 
 void loop() {
@@ -88,6 +94,10 @@ void loop() {
   {
     Joystick.Y(newPosition);
   }
+  #if DEBUG_PRINT == 1
+    Serial.print("Pitch: ");
+    Serial.println(newPosition);
+  #endif
 
   newPosition = (ROLL_GAIN * (roll.read())) + ROLL_OFFSET;
   if(newPosition <= 0)
@@ -102,6 +112,10 @@ void loop() {
   {
     Joystick.X(newPosition);
   }
+  #if DEBUG_PRINT == 1
+    Serial.print("Roll: ");
+    Serial.println(newPosition);
+  #endif
 
   newPosition = (YAW_GAIN * (yaw.read())) + YAW_OFFSET;
   if(newPosition <= 0)
@@ -116,6 +130,10 @@ void loop() {
   {
     Joystick.Zrotate(newPosition);
   }
+  #if DEBUG_PRINT == 1
+    Serial.print("Yaw: ");
+    Serial.println(newPosition);
+  #endif
 
   newPosition = ((analogRead(0) + THROTTLE_LEFT_OFFSET) * THROTTLE_LEFT_GAIN_NUMERATOR) / THROTTLE_LEFT_GAIN_DENOMINATOR;
   if(newPosition <= 0)
@@ -130,6 +148,10 @@ void loop() {
   {
     Joystick.sliderLeft(newPosition);
   }
+  #if DEBUG_PRINT == 1
+    Serial.print("Left throttle: ");
+    Serial.println(newPosition);
+  #endif
 
   newPosition = ((analogRead(1) + THROTTLE_RIGHT_OFFSET) * THROTTLE_RIGHT_GAIN_NUMERATOR) / THROTTLE_RIGHT_GAIN_DENOMINATOR;
   if(newPosition <= 0)
@@ -144,6 +166,15 @@ void loop() {
   {
     Joystick.sliderRight(newPosition);
   }
+  #if DEBUG_PRINT == 1
+    Serial.print("Right throttle: ");
+    Serial.println(newPosition);
+  #endif
+
+  #if DEBUG_PRINT == 1
+    Serial.println("");
+    delay(250);
+  #endif
   
 //  Joystick.X(4 * pwm_count);
 //  Joystick.Y(4 * pwm_count);
